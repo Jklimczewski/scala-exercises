@@ -7,5 +7,5 @@ def position[A](l: List[A], el: A): Option[Int] = {
 
 @main def lab7zad3(): Unit = {
     val lista = List(2, 1, 1, 5)
-    println(position(lista, 1))
+    println(position(lista, 3))
 }
