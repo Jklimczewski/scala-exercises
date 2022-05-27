@@ -2,17 +2,19 @@ import scala.io.Source
 
 @main def lab9zad2(): Unit = {
   val plik = Source.fromResource("ogniem-i-mieczem.txt").getLines.toList
-  val folded = plik.foldLeft(List[List[Char]]())((akum, elem) => {
-      val literki = (elem.toLowerCase).foldLeft(List[Char]())((acc, el) => {
-          if (el.isLetter) acc :+ el.toLower
-          else acc
-      })
-      akum :+ literki
+  val max: Int = 2
+
+  val fold = plik.foldLeft(List[List[Char]]())((akum, elem) => {
+    val literki = elem.foldLeft(List[Char]())((acc, el) => el match {
+      case el if el.isLetter => acc :+ el.toLower
+      case _ => acc
     })
-    val list = folded.flatten
-    val grouped = list.groupBy(n => n)
-    val literki = grouped.keys
-    val ilosc = grouped.values.map(n => n.size)
-    val zipped = literki.zip(ilosc).map((a,b) => (a, "*" * b))
-    zipped.foreach(el => println(s"${el(0)}: ${el(1)}"))
+    akum :+ literki
+  }).flatten
+  val grouped = fold.groupBy(n => n).transform((k, v) => v.size)
+  val stars = grouped.map((a,b) => (a,b) match {
+    case (x, y) if y > max => (a, "*" * max)
+    case _ => (a, "*" * b)
+  })
+  stars.foreach(el => println(s"${el.head}: ${el(1)}"))
 }
