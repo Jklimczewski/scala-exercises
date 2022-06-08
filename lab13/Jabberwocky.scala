@@ -20,9 +20,10 @@ import scala.util.Random
 case object Cyk
 case class Strzelać(obroncy1: ActorRef, obroncy2: ActorRef)
 case class Atak(obroncy: ActorRef)
+case object Atakowany
 
 class SiłaWyższa extends Actor {
-  def receive = {
+  def receive: Receive = {
     case Cyk => {
       println("Cyk")
       // wysyłamy polacenie „Strzelać” do obu Zamków
@@ -31,6 +32,11 @@ class SiłaWyższa extends Actor {
       val obroncy1 = (1 to 101).toList.map(el => context.actorOf(Props[Obrońca](), s"obronca${el}"))
       val obroncy2 = (101 to 201).toList.map(el => context.actorOf(Props[Obrońca](), s"obronca${el}"))
 
+      context.become(next(jeden, dwa, obroncy1, obroncy2))
+    }
+  }
+  def next(jeden: ActorRef, dwa: ActorRef, obroncy1: List[ActorRef], obroncy2: List[ActorRef]): Receive = {
+    case Cyk => {
       jeden ! Strzelać(obroncy1, obroncy2)
       dwa ! Strzelać(obroncy2, obroncy1)
     }
@@ -39,17 +45,24 @@ class SiłaWyższa extends Actor {
 
 class Zamek extends Actor {
   def receive: Receive = {
-    case Strzelać(x, y) => x match {
-      case pierwszy :: reszta => pierwszy ! Atak(y)
-      case _ => 
-     // Random.between(20, 30)
+    case Strzelać(x, y) => {
+      x.foreach(el => el ! Atak(y))
     }
   }
 }
 
 class Obrońca extends Actor {
   def receive: Receive = {
-    case Atak(y) =>
+    case Atak(aktywni_obroncy) => {
+      val index = Random.between(0, aktywni_obroncy.length)
+      aktywni_obroncy(index) ! Atakowany(aktywni_obroncy)
+    }
+    case Atakowany(aktywni_obroncy) => {
+      val szanse = aktywni_obroncy.toFloat/200.toFloat
+      val losowa = Random.between(1, 101)
+      if ((szanse * 100).toInt >= losowa) 
+        self() ! PoisonPill
+    }
   }
 }
 
